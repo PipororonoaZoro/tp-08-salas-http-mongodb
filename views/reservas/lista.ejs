@@ -1,0 +1,36 @@
+<section class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Listado de Reservas Registradas</h2>
+        <a href="/reservas/nueva" class="btn">+ Nueva Reserva</a>
+    </div>
+
+    <% if (reservas.length === 0) { %>
+      <p style="margin-top: 1rem;">No hay reservas registradas en este momento</p>  
+    <% } 
+    else { %>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Estudiante</th>
+                <th>Sala</th>
+                <th>Fecha</th>
+                <th>Turnos</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <body>
+            <% reservas.forEach(reserva => { %>
+            <tr>
+                <td>#<%= reserva._id %></td>
+                <td><%= reserva.estudiante %></td>
+                <td><%= reserva.sala %></td>
+                <td><%= reserva.fecha %></td>
+                <td><%= reserva.turno %></td>
+                <td><a href="/reservas/<%= reserva.id %>">Ver Detalle</a></td>
+            </tr>
+            <% }) %>
+        </body>
+    </table>
+    <% } %>
+</section>
