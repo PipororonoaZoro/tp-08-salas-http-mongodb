@@ -31,10 +31,14 @@ function crearServicioReservas() {
     return await Reserva.countDocuments();
   }
 
-  // Obtener las salas permitidas (requerido por el formulario web tradicional)
+  // Obtener las salas permitidas (alineadas con el enum del modelo Mongoose)
   async function obtenerSalasPermitidas() {
-    // Retornamos las salas fijas o un listado distintivo desde la base de datos
-    return ["Sala A", "Sala B", "Sala Sur", "Sala Norte"];
+    return ["Sala Norte", "Sala Sur", "Sala Multimedia"];
+  }
+
+  // Obtener los turnos permitidos (requerido por el formulario web tradicional)
+  async function obtenerTurnosPermitidos() {
+    return ["Mañana", "Tarde", "Noche"];
   }
 
   return {
@@ -43,6 +47,7 @@ function crearServicioReservas() {
     crearReserva,
     obtenerCantidad,
     obtenerSalasPermitidas,
+    obtenerTurnosPermitidos,
     // Alias para compatibilidad total con el controlador web tradicional:
     obtenerTodas: obtenerReservas,
   };

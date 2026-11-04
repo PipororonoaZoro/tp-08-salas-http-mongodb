@@ -4,13 +4,19 @@ const mongoose = require("mongoose");
 function crearApiReservasRouter(servicioReservas) {
   const router = Router();
 
-  // GET /api/reservas (con soporte para filtro exacto de sala y control de repetición)
+  // GET /api/reservas (con soporte para filtro exacto de sala y control estricto de tipos/repeticiones)
   router.get("/", async (req, res, next) => {
     try {
       let { sala } = req.query;
 
-      if (Array.isArray(sala)) {
-        return res.status(400).json({ error: "Parámetro de sala repetido." });
+      // Si envían parámetros repetidos (array) o un objeto anidado, rechazamos con 400
+      if (sala !== undefined) {
+        if (Array.isArray(sala) || (typeof sala === "object" && sala !== null)) {
+          return res.status(400).json({ error: "Parámetro de sala inválido o repetido." });
+        }
+        if (typeof sala !== "string") {
+          return res.status(400).json({ error: "El parámetro sala debe ser un texto." });
+        }
       }
 
       const reservas = await servicioReservas.obtenerReservas(sala);
@@ -49,9 +55,10 @@ function crearApiReservasRouter(servicioReservas) {
         return res.status(400).json({ error: "Cuerpo de solicitud ausente o inválido." });
       }
 
-      const nuevaReserva = await servicioReservas.crearReserva(datosCliente);
+      const nuevaReserva = await servicioReservas.crearReserva(datosCliente || datosCliente);
       
-      res.setHeader("Location", `/api/reservas/${nuevaReserva._id}`);
+      // Usamos el id textual público configurado en Mongoose
+      res.setHeader("Location", `/api/reservas/${nuevaReserva.id}`);
       return res.status(201).json(nuevaReserva);
     } catch (error) {
       return res.status(400).json({ error: "Creación inválida.", detalle: error.message });

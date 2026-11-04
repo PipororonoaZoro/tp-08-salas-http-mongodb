@@ -48,6 +48,16 @@ const reservaSchema = new mongoose.Schema(
   {
     collection: "reservas",
     timestamps: true,
+    // Configuración para exponer el ID público textual y limpiar los metadatos internos en JSON
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform: (doc, ret) => {
+        ret.id = ret._id.toString();
+        // Opcional: si prefieres mantener sólo `id` o ambos, aquí quedan disponibles
+        delete ret.__v;
+      },
+    },
   }
 );
 

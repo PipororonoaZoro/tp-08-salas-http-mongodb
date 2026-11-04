@@ -4,10 +4,6 @@ function crearMiddlewareValidarReserva(servicioReservas) {
 
     const estudianteLimpio = estudiante ? estudiante.trim() : "";
     const emailLimpio = email ? email.trim() : "";
-    const numPersonas = Number(personas);
-
-    const salasPermitidas = servicioReservas.obtenerSalasPermitidas();
-    const turnosPermitidos = servicioReservas.obtenerTurnosPermitidos();
 
     const valores = {
       estudiante: estudianteLimpio,
@@ -18,17 +14,50 @@ function crearMiddlewareValidarReserva(servicioReservas) {
       personas,
     };
 
+    const salasPermitidas = servicioReservas.obtenerSalasPermitidas();
+    const turnosPermitidos = servicioReservas.obtenerTurnosPermitidos();
+
     if (
       !estudianteLimpio ||
       !emailLimpio ||
       !sala ||
       !fecha ||
       !turno ||
-      !personas
+      personas === undefined ||
+      personas === null ||
+      personas === ""
     ) {
       return res.status(400).render("reservas/nueva", {
         titulo: "Nueva Reserva",
         error: "Todos los campos son obligatorios",
+        valores,
+        salasPermitidas,
+        turnosPermitidos,
+      });
+    }
+
+    // Guarda estricta de tipos para el campo personas (evitar booleanos, arreglos o no numéricos)
+    if (
+      typeof personas === "boolean" ||
+      Array.isArray(personas) ||
+      isNaN(Number(personas))
+    ) {
+      return res.status(400).render("reservas/nueva", {
+        titulo: "Nueva Reserva",
+        error: "El campo personas debe ser un número válido.",
+        valores,
+        salasPermitidas,
+        turnosPermitidos,
+      });
+    }
+
+    const numPersonas = Number(personas);
+
+    // Validación de rango (entero entre 1 y 6 según rúbrica)
+    if (!Number.isInteger(numPersonas) || numPersonas < 1 || numPersonas > 6) {
+      return res.status(400).render("reservas/nueva", {
+        titulo: "Nueva Reserva",
+        error: "La cantidad de personas debe ser un número entero entre 1 y 6.",
         valores,
         salasPermitidas,
         turnosPermitidos,

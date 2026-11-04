@@ -33,6 +33,14 @@ function crearApp(servicioReservas, configuracion) {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
+  // Interceptor para JSON mal formado (devuelve 400 en lugar de 500)
+  app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+      return res.status(400).json({ error: "JSON mal formado o sintaxis inválida." });
+    }
+    next(err);
+  });
+
   // Rutas base
   app.get("/", (req, res) => {
     res.render("inicio", { titulo: "Inicio" });

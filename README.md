@@ -1,89 +1,64 @@
-# TP 08 - Endpoints Persistentes de Reservas de Salas (MongoDB)
+# TP 08 — Persistencia con MongoDB, Express y Mongoose
 
-Trabajo práctico individual de desarrollo back-end con Node.js, Express y MongoDB Atlas. Migración del almacenamiento en memoria del TP 07 hacia una base de datos persistente mediante Mongoose.
+Aplicación web y API RESTful desarrollada para la gestión de reservas de salas, migrada desde almacenamiento en memoria RAM (TP 07) hacia una base de datos persistente en **MongoDB Atlas** utilizando **Mongoose**, aplicando una arquitectura modular por capas.
 
----
+## 🚀 Requisitos e Instalación
 
-## 1. Características Principales y Origen
-* **Origen de la copia:** Basado en el proyecto funcional individual del TP 07.
-* **Persistencia:** Conexión asincrónica a MongoDB Atlas Free Tier (`reservas_salas_u8`, colección `reservas`) utilizando Mongoose.
-* **Dualidad de Vistas:** Mantiene la compatibilidad con el sitio web tradicional (vistas EJS renderizadas desde el servidor) y expone una API RESTful en formato JSON.
+* Node.js (Versión 18 o superior recomendada, con soporte nativo para --env-file).
+* MongoDB Atlas (Base de datos configurada con el nombre reservas_salas_u8).
 
----
+### 1. Clonar el repositorio e instalar dependencias
+git clone <url-del-repositorio>
+cd <nombre-del-proyecto>
+npm install
 
-## 2. Requisitos y Entorno
-* **Node.js** (Versión recomendada: v18 o superior).
-* **MongoDB Atlas** (URI de conexión configurada mediante variables de entorno).
-
-### Variables de Entorno (`.env`)
-Crear un archivo `.env` en la raíz del proyecto basándose en la plantilla `.env.example`:
-```env
+### 2. Configuración de Entorno
+Crear un archivo .env en la raíz del proyecto:
 PORT=3000
-NODE_ENV=development
 MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster.mongodb.net/reservas_salas_u8?retryWrites=true&w=majority
-```
-*(Nota: El archivo `.env` no se incluye en el control de versiones por seguridad).*
+NODE_ENV=development
 
----
-
-## 3. Comando de Inicio
-Para iniciar el servidor en entorno de desarrollo utilizando la carga nativa de variables de entorno de Node.js:
-```bash
+### 3. Ejecución del Servidor
 node --env-file=.env src/index.js
-```
+*(El servidor aguardará la conexión exitosa a MongoDB antes de abrir el puerto 3000 y cuenta con cierre ordenado ante señales SIGINT / SIGTERM).*
 
 ---
 
-## 4. Estructura del Proyecto por Capas
-* `src/config/`: Configuración de la conexión a la base de datos.
-* `src/modelos/`: Esquemas y modelos de Mongoose (`reserva.js`).
-* `src/servicios/`: Lógica de negocio y operaciones asincrónicas contra MongoDB.
-* `src/controladores/`: Manejadores de peticiones tanto para la API JSON como para las vistas EJS.
-* `src/rutas/`: Separación entre routers de la API (`/api/reservas`) y rutas web tradicionales (`/reservas`).
-* `src/middleware/`: Manejo centralizado de errores y validaciones.
+## 📂 Arquitectura del Proyecto (Por Capas)
+
+* `src/config/`: Configuración de entorno y conexión asincrónica a MongoDB con Mongoose.
+* `src/modelos/`: Esquemas de Mongoose con validaciones estrictas, enums y transformación de _id a id textual público.
+* `src/servicios/`: Lógica de negocio asincrónica centralizada, compartida entre la interfaz web y la API REST.
+* `src/controladores/`: Controladores encargados de gestionar las peticiones HTTP y renderizar vistas EJS o respuestas JSON.
+* `src/rutas/`: Separación estricta entre el router web tradicional (/reservas) y el router de la API REST (/api/reservas).
+* `src/middleware/`: Validaciones estrictas de tipos (guardas contra booleanos/arrays en campos numéricos) y control de solicitudes.
 
 ---
 
-## 5. Tabla de Endpoints (API REST)
+## 🔌 Contrato de Endpoints (API REST)
 
-| Método | Endpoint | Descripción | Respuesta Exitosa |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/api/reservas` | Obtiene el listado completo de reservas. | `200 OK` (Arreglo JSON) |
-| **GET** | `/api/reservas/:id` | Consulta una reserva específica por su ID. | `200 OK` (Objeto JSON) |
-| **POST** | `/api/reservas` | Crea una nueva reserva (estado por defecto: `pendiente`). | `201 Created` (Cabecera `Location`) |
-| **GET** | `/api/reservas?sala=X` | Filtra las reservas de forma exacta por nombre de sala. | `200 OK` (Arreglo filtrado) |
-| **GET** | `/estado` | Obtiene el conteo total de reservas desde la base de datos. | `200 OK` |
+* GET /api/reservas -> Obtiene el listado completo (admite filtro exacto ?sala=...) [200 OK]
+* GET /api/reservas/:id -> Obtiene una reserva específica por su ID textual [200 OK]
+* POST /api/reservas -> Crea una nueva reserva validando esquema y tipos [201 Created + Header Location]
+* GET /estado -> Comprueba el estado del servicio y conteo persistente [200 OK]
 
 ---
 
-## 6. Instrucciones para Pruebas en Postman
+## 🧪 Pruebas y Evidencia (Postman / Casos Negativos)
 
-1. **Listar Reservas:** Realizar una solicitud `GET` a `http://localhost:3000/api/reservas` (sin cuerpo).
-2. **Crear Reserva:** Realizar un `POST` a `http://localhost:3000/api/reservas` seleccionando Body -> raw -> JSON:
-   ```json
-   {
-     "estudiante": "Ana Ejemplo",
-     "email": "ana@example.com",
-     "sala": "Sala Norte",
-     "fecha": "2026-10-21",
-     "turno": "Mañana",
-     "personas": 2
-   }
-   ```
-3. **Consultar por ID / Location:** Copiar el ID o la URL recibida en la cabecera `Location` de la respuesta anterior y realizar un `GET` a dicha dirección.
+1. **Creación Exitosa (POST /api/reservas):**
+   * Envía un JSON válido con estudiante, email, sala, fecha, turno y personas.
+   * Retorna 201 Created, el objeto con su id textual y genera la cabecera Location: /api/reservas/<id>.
+2. **Consulta y Persistencia Post-Reinicio:**
+   * Al reiniciar Node.js, las reservas se mantienen intactas en MongoDB Atlas, comprobándose mediante GET /api/reservas y la vista web.
+3. **Casos Negativos controlados:**
+   * JSON roto / sintaxis inválida: Retorna 400 Bad Request en formato JSON de forma segura.
+   * ID mal formado o inexistente: Retorna 400 Bad Request o 404 Not Found.
+   * Parámetros repetidos o no textuales en query (?sala[]=...): Rechazados explícitamente con 400 Bad Request.
+   * Tipos de datos inválidos en personas (booleanos/arrays): Interceptados y rechazados antes de persistir.
 
 ---
 
-## 7. Matriz de Resultados Mínimos
-
-| Caso de Prueba | Resultado Esperado | Estado Actual |
-| :--- | :--- | :--- |
-| Listado con base vacía o con datos | `200 OK` y arreglo JSON | ✅ Validado |
-| Creación válida | `201 Created` y cabecera `Location` | ✅ Validado |
-| Consulta por ID existente | `200 OK` y recurso correspondiente | ✅ Validado |
-| Consulta tras reiniciar el servidor | `200 OK` (Persistencia comprobada) | ✅ Validado |
-| ID mal formado (`/1`) | `400 Bad Request` | ✅ Validado |
-| ID válido inexistente (`000...`) | `404 Not Found` | ✅ Validado |
-| Creación inválida (campos vacíos / sin `@`) | `400 Bad Request` (Sin escrituras) | ✅ Validado |
-| Filtro exacto por sala | Coincidencias exactas o `[]` | ✅ Validado |
-| Sitio web tradicional y vistas EJS | Conteo persistente y renderizado correcto | ✅ Validado |
+## 🔄 Comparativa con el TP 07
+* **Almacenamiento:** Se retiró el arreglo estático en memoria RAM, migrando de manera completa a documentos persistentes en MongoDB Atlas mediante Mongoose.
+* **Robustez:** Incorporación de manejo de errores HTTP seguros (separación limpia entre errores 400 y 500), cierre ordenado por señales y validaciones tipadas estrictas.
