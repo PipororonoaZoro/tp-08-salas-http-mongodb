@@ -19,6 +19,7 @@ async function conectarBaseDatos() {
     console.log("[DB] Conexion exitosa a MongoDB Atlas.");
   } catch (error) {
     console.error("[DB] Error al conectar a la base de datos:", error.message);
+    throw error; // ¡Esto era lo que faltaba! Propagamos el error para frenar el arranque
   }
 }
 

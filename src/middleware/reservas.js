@@ -1,5 +1,5 @@
 function crearMiddlewareValidarReserva(servicioReservas) {
-  return function validarReserva(req, res, next) {
+  return async function validarReserva(req, res, next) {
     const { estudiante, email, sala, fecha, turno, personas } = req.body;
 
     const estudianteLimpio = estudiante ? estudiante.trim() : "";
@@ -14,8 +14,9 @@ function crearMiddlewareValidarReserva(servicioReservas) {
       personas,
     };
 
-    const salasPermitidas = servicioReservas.obtenerSalasPermitidas();
-    const turnosPermitidos = servicioReservas.obtenerTurnosPermitidos();
+    // ¡Solucionado! Agregamos await para obtener los arreglos reales desde el servicio asincrónico
+    const salasPermitidas = await servicioReservas.obtenerSalasPermitidas();
+    const turnosPermitidos = await servicioReservas.obtenerTurnosPermitidos();
 
     if (
       !estudianteLimpio ||
